@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Portal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #eef3f9;
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --primary: #5b8def;
+  --text: #1e293b;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --highlight: #dbeafe;
+}
+
+body {
+  margin:0;
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width:240px;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:20px;
+}
+
+.sidebar h2 {
+  margin-bottom:25px;
+  font-weight:600;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Nav */
+.nav a {
+  display:block;
+  padding:12px;
+  margin-bottom:10px;
+  color:var(--muted);
+  text-decoration:none;
+  border-radius:10px;
+  transition:0.2s;
+}
+
+.nav a:hover {
+  background:#f1f5f9;
+}
+
+.nav a.active {
+  background:#e0ecff;
+  color:var(--primary);
+  font-weight:500;
+}
+
+/* Main */
+.main {
+  flex:1;
+  padding:30px;
+}
+
+/* Sections */
+.section { display:none; }
+.section.active { display:block; }
+
+/* Highlight */
+.highlight-box {
+  background:var(--highlight);
+  padding:20px;
+  border-radius:15px;
+  margin:20px 0;
+}
+
+/* Cards */
+.cards {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+}
+
+.card {
+  background:var(--card);
+  padding:20px;
+  border-radius:15px;
+  border:1px solid var(--border);
+}
+
+/* Upload */
+.upload-box {
+  margin-top:20px;
+  background:var(--card);
+  padding:20px;
+  border-radius:15px;
+  border:1px solid var(--border);
+}
+
+.upload-box input,
+.upload-box button {
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+
+.upload-box input {
+  background:#f9fafb;
+  border:1px solid var(--border);
+}
+
+.upload-box button {
+  background:var(--primary);
+  color:#fff;
+  cursor:pointer;
+}
+
+.upload-box button:hover {
+  opacity:0.9;
+}
+
+/* Table */
+.table {
+  width:100%;
+  margin-top:20px;
+  border-collapse:collapse;
+  background:white;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.table th {
+  background:#f1f5f9;
+}
+
+.table th, .table td {
+  padding:12px;
+  border-bottom:1px solid var(--border);
+}
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <h2>🎓 Student Portal</h2>
+  <div class="nav">
+    <a href="#" onclick="showSection('dashboard', this)" class="active">Dashboard</a>
+    <a href="#" onclick="showSection('assignments', this)">Assignments</a>
+    <a href="#" onclick="showSection('results', this)">Results</a>
+    <a href="#" onclick="showSection('profile', this)">Profile</a>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="section active">
+    <h1>Welcome 👋</h1>
+    <p style="color:#6b7280;">Your place for managing assignments and progress.</p>
+
+    <div class="highlight-box">
+      <h3>Daily Motivation</h3>
+      <p><i>"Stay consistent and success will follow."</i></p>
+    </div>
+
+    <div class="cards">
+      <div class="card">Total Assignments: 12</div>
+      <div class="card">Submitted: 8</div>
+      <div class="card">Pending: 4</div>
+    </div>
+  </div>
+
+  <!-- Assignments -->
+  <div id="assignments" class="section">
+    <h1>Submit Assignment</h1>
+
+    <div class="upload-box">
+      <input type="text" id="name" placeholder="Your Name">
+      <input type="text" id="title" placeholder="Assignment Title">
+      <input type="file" id="file">
+
+      <button onclick="submitAssignment()">Submit</button>
+      <p id="msg"></p>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="section">
+    <h1>Results</h1>
+    <p>No results yet.</p>
+  </div>
+
+  <!-- Profile -->
+  <div id="profile" class="section">
+    <h1>Profile</h1>
+    <p>Name: Student</p>
+  </div>
+
+</div>
+
+<script>
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+}
+
+const CLOUDINARY = {
+  cloudName: "djc6wmsmn",
+  uploadPreset: "assignment"
+};
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY.uploadPreset);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/auto/upload`,
+    { method: "POST", body: formData }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error.message);
+
+  return data.secure_url;
+}
+
+async function submitAssignment() {
+  const name = document.getElementById("name").value;
+  const title = document.getElementById("title").value;
+  const file = document.getElementById("file").files[0];
+
+  if (!name || !title || !file) {
+    document.getElementById("msg").innerText = "Fill all fields!";
+    return;
+  }
+
+  document.getElementById("msg").innerText = "Uploading...";
+
+  try {
+    const url = await uploadToCloudinary(file);
+
+    document.getElementById("msg").innerText = "Uploaded ✅";
+
+    const row = `
+      <tr>
+        <td>${title}</td>
+        <td><a href="${url}" target="_blank">View</a></td>
+      </tr>
+    `;
+    document.getElementById("tableBody").innerHTML += row;
+
+  } catch (err) {
+    document.getElementById("msg").innerText = err.message;
+  }
+}
+</script>
+
+</body>
+</html>
